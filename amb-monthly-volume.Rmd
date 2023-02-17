@@ -693,3 +693,16 @@ htmltools::browsable(
 
 ```
 
+
+```{r Monthly Volume Data Download Test, echo = FALSE, warning = FALSE, message = FALSE}
+
+datatable(monthly_vol, extensions = "Buttons", 
+            options = list(paging = TRUE,
+                           scrollX=TRUE, 
+                           searching = TRUE,
+                           ordering = TRUE,
+                           dom = 'Bfrtip',
+                           buttons = c('copy', 'csv', 'excel', 'pdf')))
+
+```
+
