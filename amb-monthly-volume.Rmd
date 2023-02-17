@@ -683,7 +683,7 @@ htmltools::browsable(
     wrap = TRUE,
     searchable = TRUE,
     
-    groupBy = c("CAMPUS"),
+    groupBy = c("Campus"),
     elementId = "month-volume-download-table",
     
 
