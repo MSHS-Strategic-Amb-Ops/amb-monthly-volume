@@ -658,8 +658,7 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 *Rad Onc and Radiology data is included only in monthly volumes.*<br/>
 __________________________________________________________________________________________________________________________________________________________
 
-## Monthly Volume {.tabset .tabset-fade .tabset-pills}
-
+## Monthly Volume by Site {.tabset .tabset-fade .tabset-pills}
 ```{r Monthly Volume Data Download, echo = FALSE, warning = FALSE, message = FALSE}
 
 htmltools::browsable(
@@ -684,8 +683,7 @@ htmltools::browsable(
     searchable = TRUE,
     
     groupBy = c("Campus"),
-    elementId = "month-volume-download-table",
-    
+    elementId = "month-volume-download-table"
 
     )
   )
