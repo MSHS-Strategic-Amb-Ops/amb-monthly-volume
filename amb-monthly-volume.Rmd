@@ -275,7 +275,6 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 
 ```{r Import Data, echo = FALSE, warning = FALSE, message = FALSE}
 '%!in%' <- function(x,y)!('%in%'(x,y))
-
 # scheduling_data_raw <- readRDS("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/historical_data.rds") %>%
 #   # filter(!is.na(Campus)) %>%
 #   # filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD")) %>%
@@ -284,19 +283,16 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 # 
 # require(openxlsx)
 # write.xlsx(scheduling_data_raw, "/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/scheduling_data_Dec22.xlsx")
-
 scheduling_data_raw <- readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds") %>%
   mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
   filter(!is.na(Campus)) %>%
   filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG")) %>%
   filter(Appt.Status == "Arrived")%>%
   filter(Appt.DateYear >= as.Date("2022-01-01", format="%Y-%m-%d") & Appt.DateYear <= as.Date(max(Appt.Made.DTTM), format="%Y-%m-%d"))
-
 # rad_onc_data_raw <- read.csv("Rad_Onc_Data.csv")
 rad_onc_data_raw <- read.csv("/nfs/data/Applications/Ambulatory/Rad_Onc_Data.csv")
 radiology_data_raw <- read.csv("/nfs/data/Applications/Ambulatory/Radiology_Data.csv")
 radiology_ref <- read.csv("/nfs/data/Applications/Ambulatory/Radiology_Site_Mapping.csv")
-
 # rad_onc_data_raw <- read.csv("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/Rad_Onc_Data.csv")
 # radiology_data_raw <- read.csv("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/Radiology_Data.csv")
 # radiology_ref <- read.csv("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/Radiology_Site_Mapping.csv")
@@ -311,7 +307,6 @@ avg_2019_ref <- data.frame(
   avg_2019 = c(416628, 15634, 25121, 37702, 118317,
              1334, 28211, 36684, 40224, 76345, 31823)
 )
-
 ```
 
 
@@ -494,7 +489,6 @@ visits_end_date <- max(scheduling_data$Appt.DateYear)
 #     values_to = "daily_vol",
 #   )
 # }
-
   daily_vol <- scheduling_data %>%
   filter(Appt.Status == "Arrived") %>%
   filter(Appt.DateYear >= todays_date-7) %>%
@@ -511,7 +505,6 @@ visits_end_date <- max(scheduling_data$Appt.DateYear)
     names_to = "Visit.Method",
     values_to = "daily_vol",
   )
-
 daily_vol_last_year <- scheduling_data %>%
   filter(Appt.Status == "Arrived") %>%
   filter(Appt.WeekNum == lubridate::epiweek(todays_date)) %>%
@@ -529,8 +522,6 @@ daily_vol_last_year <- scheduling_data %>%
     names_to = "Visit.Method",
     values_to = "daily_vol",
   )
-
-
 ```
 
 
@@ -553,7 +544,6 @@ weekly_vol <- weekly_vol_df %>%
     names_to = "Visit.Method",
     values_to = "weekly_vol"
   )
-
 weekly_vol_last_year <- scheduling_data %>%
   filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
   filter(Appt.Status == "Arrived") %>%
@@ -599,10 +589,8 @@ monthly_vol <- monthly_vol %>%
   )
 monthly_vol <- monthly_vol %>%
   filter(Appt.Year >= as.numeric(todays_year)-1) 
-
 # require(openxlsx)
 # write.xlsx(monthly_vol, "/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/monthly_volume_Jan21Dec22.xlsx")
-
 # Last 12 months of monthly data 
 # monthly_vol_12mo <- scheduling_data %>%
 #   filter(Appt.Status == "Arrived") %>%
@@ -641,7 +629,6 @@ avg_2022_ref <- monthly_vol %>%
   summarise(total = sum(monthly_vol)) %>%
   group_by(Campus) %>%
   summarise(avg = round(mean(total),0))
-
 ```
 
 
@@ -660,14 +647,12 @@ ________________________________________________________________________________
 
 ## Monthly Volume by Site {.tabset .tabset-fade .tabset-pills}
 ```{r Monthly Volume Data Download, echo = FALSE, warning = FALSE, message = FALSE}
-
 htmltools::browsable(
   tagList(
     tags$button(
       tagList(fontawesome::fa("download"), "Download Monthly Volume by Site"),
-      onclick = "Reactable.downloadDataCSV('month-volume-download-table', 'Ambulatory Volume by Month"
+      onclick = "Reactable.downloadDataCSV('month-volume-download-table', 'Ambulatory Volume by Month'"
     ),
-
     reactable(
       monthly_vol,
       style = list(fontFamily = 'Calibri',
@@ -684,16 +669,13 @@ htmltools::browsable(
     
     groupBy = c("Campus"),
     elementId = "month-volume-download-table"
-
     )
   )
 )
-
 ```
 
 
 ```{r Monthly Volume Data Download Test, echo = FALSE, warning = FALSE, message = FALSE}
-
 datatable(monthly_vol, extensions = "Buttons", 
             options = list(paging = TRUE,
                            scrollX=TRUE, 
@@ -701,6 +683,4 @@ datatable(monthly_vol, extensions = "Buttons",
                            ordering = TRUE,
                            dom = 'Bfrtip',
                            buttons = c('copy', 'csv', 'excel', 'pdf')))
-
 ```
-
