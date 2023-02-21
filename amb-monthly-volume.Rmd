@@ -407,6 +407,8 @@ full_year <- format((lubridate::floor_date(max(scheduling_data$Appt.DateYear), u
 last_year <- as.numeric(full_year)-1
 current_month <- format((lubridate::floor_date(max(scheduling_data$Appt.DateYear), unit = "month")), "%B")
 visits_end_date <- max(scheduling_data$Appt.DateYear)
+
+report_run_date <- Sys.Date()
 ```
 
 
@@ -464,7 +466,6 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 
 # Ambulatory Volume Summary
 *Report run date: `r report_run_date`*<br/>
-*Report produced for week of `r todays_date`*<br/>
 *Includes all completed/arrived visits from 2019 (including Radiology and Rad Onc volumes)*<br/>
 __________________________________________________________________________________________________________________________________________________________
 
