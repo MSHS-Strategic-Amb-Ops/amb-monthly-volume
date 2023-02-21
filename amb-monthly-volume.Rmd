@@ -651,7 +651,7 @@ htmltools::browsable(
   tagList(
     tags$button(
       tagList(fontawesome::fa("download"), "Download Monthly Volume by Site"),
-      onclick = "Reactable.downloadDataCSV('month-volume-download-table', 'Ambulatory Volume by Month'"
+      onclick = "Reactable.downloadDataCSV('unassigned-download-table', 'Unassigned Referrals Data')"
     ),
     reactable(
       monthly_vol,
@@ -668,7 +668,7 @@ htmltools::browsable(
     searchable = TRUE,
     
     groupBy = c("Campus"),
-    elementId = "month-volume-download-table"
+    elementId = "unassigned-download-table"
     )
   )
 )
