@@ -109,7 +109,7 @@ h4 {
 
 
 ```{r Load Packages, echo = FALSE, warning = FALSE, message = FALSE}
-# Load packages -----------------------------------------------------------------------------------
+# # Load packages -----------------------------------------------------------------------------------
 suppressMessages({
   memory.limit(size = 8000000)
   library(readxl)
@@ -134,7 +134,7 @@ suppressMessages({
   library(gridExtra)
   library(eeptools)
   library(ggQC)
-  #library(zipcode)
+  library(zipcodeR)
   library(utils)
   library(scales)
   library(chron)
@@ -178,10 +178,33 @@ suppressMessages({
   library(shinyjs)
   library(janitor)
   library(patchwork)
-  library(nloptr)
+  library(flexdashboard)
+  # library(tidyverse)
+  # library(viridis)
+  # library(hrbrthemes)
+  # library(plotly)
+  # install.packages("bsts")
+  library(bsts)
   library(reactable)
-  library(sparkline)
+  # install.packages("reactablefmtr")
+  library(reactablefmtr)
+  library(svDialogs)
+  # library(openxlsx)
+  library(flextable)
+  library(officedown)
+  library(officer)
+  library(magrittr)
+  library(webshot) 
+  library(png)
+  library(ggh4x)
+  library(RODBC)
+  library(DBI)
+  library(odbc)
+  library(dbplyr)
+  library(pool)
+  library(emojifont)
 })
+
 ```
 
 
@@ -273,85 +296,67 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 ```
 
 
-```{r Import Data, echo = FALSE, warning = FALSE, message = FALSE}
+```{r Import Clarity Data, echo = FALSE, warning = FALSE, message = FALSE}
+# Connection to Oracle DB ------------------------------------------------------
+conn1 <- dbPool(drv = odbc(), dsn = "OAO Cloud DB SoYoun", timeout = 30)
+
+# Import Slot Availability Data ------------------------------------------------
+# slot_raw_tbl <- tbl(conn1, "Y_DM_BOOKED_FILLED_RATE")
+access_raw_tbl <- tbl(conn1, "MV_DM_PATIENT_ACCESS")
+
+# date_1 <- paste0(format(Sys.Date(), "%Y-%m-%d"), " 23:59:59")
+date_1 <- paste0(format(Sys.Date(), "%Y-%m-%d"), " 00:00:00")
+
+scheduling_data <- access_raw_tbl %>%
+  filter(TO_DATE(date_1,"YYYY-MM-DD HH24:MI:SS") > APPT_DTTM) %>%
+  filter(DERIVED_STATUS_DESC == "Arrived") %>%
+  mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>%
+  mutate(Appt.Year = year(CONTACT_DATE),
+         Appt.Month = month(CONTACT_DATE)) %>%
+  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, PAT_ENC_CSN_ID, Appt.DateYear, Appt.Year, Appt.Month, VISIT_METHOD) %>%
+  summarise(total = n()) %>%
+  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, Appt.DateYear, Appt.Year, Appt.Month, VISIT_METHOD) %>%
+  summarise(monthly_vol = sum(total)) %>%
+  collect() 
+
+
+
+# Scheduling Data (Epic)
+scheduling_data <- scheduling_data %>%
+  mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear),
+         Appt.Week = floor_date(as.Date(Appt.DateYear, "%Y-%m-%d"), unit="week", week_start = 7),
+         Visit.Method  = case_when(VISIT_METHOD == "IN PERSON" ~ 'IN PERSON'
+                                   ,TRUE ~ 'TELEHEALTH'))
+
+scheduling_data <- scheduling_data %>%
+  rename(Campus = SITE,
+         Campus.Specialty = DEPT_SPECIALTY_NAME,
+         Department = DEPARTMENT_NAME)
+
+```
+
+
+```{r Global Variables, echo = FALSE, warning = FALSE, message = FALSE}
+
 '%!in%' <- function(x,y)!('%in%'(x,y))
-# scheduling_data_raw <- readRDS("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/historical_data.rds") %>%
-#   # filter(!is.na(Campus)) %>%
-#   # filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDD")) %>%
-#   filter(Appt.Status == "Arrived")%>%
-#   filter(Appt.DateYear >= as.Date("2022-01-01", format="%Y-%m-%d") & Appt.DateYear <= as.Date(max(Appt.Made.DTTM), format="%Y-%m-%d"))
-# 
-# require(openxlsx)
-# write.xlsx(scheduling_data_raw, "/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/scheduling_data_Dec22.xlsx")
-scheduling_data_raw <- readRDS("/nfs/data/Applications/Ambulatory/Data_Updated/historical_data.rds") %>%
-  mutate(Campus = ifelse(Campus == "MSDD", "MSDMG", Campus)) %>%
-  filter(!is.na(Campus)) %>%
-  filter(Campus %in% c("NETWORK","MSM","MSH-MSDFP","ONCOLOGY","MSW","MSBI","MSUS","MSH- AMBULATORY CARE","MSDMG")) %>%
-  filter(Appt.Status == "Arrived")%>%
-  filter(Appt.DateYear >= as.Date("2022-01-01", format="%Y-%m-%d") & Appt.DateYear <= as.Date(max(Appt.Made.DTTM), format="%Y-%m-%d"))
+```
+
+
+```{r Import Data, echo = FALSE, warning = FALSE, message = FALSE}
+
 # rad_onc_data_raw <- read.csv("Rad_Onc_Data.csv")
 rad_onc_data_raw <- read.csv("/nfs/data/Applications/Ambulatory/Rad_Onc_Data.csv")
 radiology_data_raw <- read.csv("/nfs/data/Applications/Ambulatory/Radiology_Data.csv")
 radiology_ref <- read.csv("/nfs/data/Applications/Ambulatory/Radiology_Site_Mapping.csv")
-# rad_onc_data_raw <- read.csv("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/Rad_Onc_Data.csv")
-# radiology_data_raw <- read.csv("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/Radiology_Data.csv")
-# radiology_ref <- read.csv("/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/Radiology_Site_Mapping.csv")
+
+rad_onc_data_raw <- read.csv("Rad_Onc_Data.csv")
+radiology_data_raw <- read.csv("Radiology_Data.csv")
+radiology_ref <- read.csv("Radiology_Site_Mapping.csv")
 ```
 
 
-```{r 2019 Past Year Volume Reference, echo = FALSE, warning = FALSE, message = FALSE}
-# In Person + Telehealth (Includes Radiology and Rad Onc) - Based on Exeutive Dashboard Tableau Workbook
-avg_2019_ref <- data.frame(
-  Campus = c("MSHS", "MSBI", "MSDMG", "MSH- AMBULATORY CARE", "MSH-MSDFP",
-             "MSHP", "MSM", "MSUS", "MSW", "NETWORK", "ONCOLOGY"),
-  avg_2019 = c(416628, 15634, 25121, 37702, 118317,
-             1334, 28211, 36684, 40224, 76345, 31823)
-)
-```
+```{r Radiology and Rad Onc Data Processing, echo = FALSE, warning = FALSE, message = FALSE}
 
-
-```{r Set Variables, echo = FALSE, warning = FALSE, message = FALSE}
-library(lubridate)
-weekNum_sunday <- scheduling_data_raw %>%
-  filter(Appt.Day == "Sun") %>%
-  mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear)) %>%
-  dplyr::select(Appt.Year, Appt.WeekNum, Appt.Day, Appt.DateYear) %>%
-  distinct() %>%
-  arrange(Appt.DateYear) %>%
-  rename(Appt.Week = Appt.DateYear)
-# weekNum_sunday <- head(weekNum_sunday,-1)
-# Set up crosswalk for Week Number and Week Starting Date (Monday)
-# weekNum_monday <- scheduling_data_raw %>% 
-#   filter(Appt.Day == "Mon") %>%
-#   mutate(Appt.WeekNum = as.numeric(strftime(Appt.DateYear, format = "%V"))) %>%
-#   select(Appt.Year, Appt.WeekNum, Appt.Day, Appt.DateYear) %>%
-#   distinct() %>%
-#   arrange(Appt.DateYear) 
-# weekNum_monday <- tail(weekNum_monday, 58)
-# Set Variables
-report_run_date <- Sys.Date()
-todays_date <- (tail(weekNum_sunday,1))$Appt.Week
-todays_year <- strftime(todays_date, format = "%Y")
-todays_month <- strftime(todays_date, format = "%B")
-todays_week <- (tail(weekNum_sunday,1))$Appt.Week
-past_4_wks <- tail(weekNum_sunday, 4)
-past_5_wks <- tail(weekNum_sunday, 5)
-# past_5_wks <- head(past_5_wks, 5)
-past_year <- weekNum_sunday %>%
-  filter(Appt.WeekNum %in% unique(past_5_wks$Appt.WeekNum))
-reporting_week <- paste0("from Sunday, ",todays_date, " to Saturday, ",todays_date+6)
-```
-
-
-```{r Data Processing, echo = FALSE, warning = FALSE, message = FALSE}
-# Scheduling Data (Epic)
-scheduling_data <- scheduling_data_raw %>%
-  mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear),
-         Appt.Week = floor_date(as.Date(Appt.DateYear, "%Y-%m-%d"), unit="week", week_start = 7),
-         Visit.Method  = case_when(Visit.Method == "IN PERSON" ~ 'IN PERSON'
-                                   ,TRUE ~ 'TELEHEALTH'))
-rm(scheduling_data_raw)
-scheduling_data <- merge(scheduling_data, weekNum_sunday[,c("Appt.Year","Appt.WeekNum","Appt.Week")])
 # Radiology + Rad Onc Data
 rad_onc_data_raw <- rad_onc_data_raw %>%
   mutate_at(c('MSBI', 'MSH.MSDFP', 'MSUS', 'MSW'), as.numeric) %>%
@@ -405,173 +410,14 @@ visits_end_date <- max(scheduling_data$Appt.DateYear)
 ```
 
 
-```{r Daily Volume Data, echo = FALSE, warning = FALSE, message = FALSE}
-# Daily volume comparison for past week
-# if(format(max(scheduling_data$Appt.DateYear), format = "%A") == "Sunday"){
-#   
-#   daily_vol <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.DateYear >= max(scheduling_data$Appt.DateYear)-14 & Appt.DateYear < max(scheduling_data$Appt.DateYear)) %>%
-#   group_by(Campus, Appt.Year, Appt.WeekNum, Appt.DateYear, Appt.Day, Visit.Method) %>%
-#   summarise(daily_vol = n()) %>%
-#   pivot_wider(
-#     names_from = Visit.Method, 
-#     values_from = daily_vol,
-#     values_fill=list(daily_vol=0)
-#   ) %>%
-#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-#   pivot_longer(
-#     6:8,
-#     names_to = "Visit.Method",
-#     values_to = "daily_vol",
-#   )
-#   
-# } else{
-#   
-#   daily_vol <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.DateYear > max(scheduling_data$Appt.DateYear)-14 & Appt.DateYear <= max(scheduling_data$Appt.DateYear)) %>%
-#   group_by(Campus, Appt.Year, Appt.WeekNum, Appt.DateYear, Appt.Day, Visit.Method) %>%
-#   summarise(daily_vol = n()) %>%
-#   pivot_wider(
-#     names_from = Visit.Method, 
-#     values_from = daily_vol,
-#     values_fill=list(daily_vol=0)
-#   ) %>%
-#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-#   pivot_longer(
-#     6:8,
-#     names_to = "Visit.Method",
-#     values_to = "daily_vol",
-#   )
-#   
-# }
-#                            
-#                            
-# if(format(max(scheduling_data$Appt.DateYear), format = "%A") == "Sunday"){
-#   
-# # Daily volume comparison of same week last year 
-# daily_vol_last_year <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.WeekNum == lubridate::epiweek(todays_date) - 1) %>%
-#   # filter(Appt.DateYear >= max(scheduling_data$Appt.DateYear)-5) %>%
-#   group_by(Campus, Appt.Year, Appt.WeekNum, Appt.DateYear, Appt.Day, Visit.Method) %>%
-#   summarise(daily_vol = n()) %>%
-#   pivot_wider(
-#     names_from = Visit.Method, 
-#     values_from = daily_vol,
-#     values_fill=list(daily_vol=0)
-#   ) %>%
-#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-#   pivot_longer(
-#     6:8,
-#     names_to = "Visit.Method",
-#     values_to = "daily_vol",
-#   )
-# } else{
-#   
-#   # Daily volume comparison of same week last year 
-# daily_vol_last_year <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.WeekNum == lubridate::epiweek(todays_date)) %>%
-#   # filter(Appt.DateYear >= max(scheduling_data$Appt.DateYear)-5) %>%
-#   group_by(Campus, Appt.Year, Appt.WeekNum, Appt.DateYear, Appt.Day, Visit.Method) %>%
-#   summarise(daily_vol = n()) %>%
-#   pivot_wider(
-#     names_from = Visit.Method, 
-#     values_from = daily_vol,
-#     values_fill=list(daily_vol=0)
-#   ) %>%
-#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-#   pivot_longer(
-#     6:8,
-#     names_to = "Visit.Method",
-#     values_to = "daily_vol",
-#   )
-# }
-  daily_vol <- scheduling_data %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Appt.DateYear >= todays_date-7) %>%
-  group_by(Campus, Appt.Year, Appt.WeekNum, Appt.DateYear, Appt.Day, Visit.Method) %>%
-  summarise(daily_vol = n()) %>%
-  pivot_wider(
-    names_from = Visit.Method,
-    values_from = daily_vol,
-    values_fill=list(daily_vol=0)
-  ) %>%
-  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-  pivot_longer(
-    6:8,
-    names_to = "Visit.Method",
-    values_to = "daily_vol",
-  )
-daily_vol_last_year <- scheduling_data %>%
-  filter(Appt.Status == "Arrived") %>%
-  filter(Appt.WeekNum == lubridate::epiweek(todays_date)) %>%
-  # filter(Appt.DateYear >= max(scheduling_data$Appt.DateYear)-5) %>%
-  group_by(Campus, Appt.Year, Appt.WeekNum, Appt.DateYear, Appt.Day, Visit.Method) %>%
-  summarise(daily_vol = n()) %>%
-  pivot_wider(
-    names_from = Visit.Method,
-    values_from = daily_vol,
-    values_fill=list(daily_vol=0)
-  ) %>%
-  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-  pivot_longer(
-    6:8,
-    names_to = "Visit.Method",
-    values_to = "daily_vol",
-  )
-```
-
-
-```{r Weekly Volume Data, echo = FALSE, warning = FALSE, message = FALSE}
-weekly_vol_df <- merge(scheduling_data, past_5_wks[,c("Appt.Year","Appt.WeekNum")])
-weekly_vol <- weekly_vol_df %>%
-  filter(Appt.Week %in% unique(past_5_wks$Appt.Week)) %>%
-  filter(Appt.Status == "Arrived") %>%
-  arrange(Appt.Year, Appt.WeekNum) %>%
-  group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.Week, Appt.WeekNum, Visit.Method) %>%
-  summarise(weekly_vol = n()) %>%
-  pivot_wider(
-    names_from = Visit.Method, 
-    values_from = weekly_vol,
-    values_fill=list(weekly_vol=0)
-  ) %>%
-  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-  pivot_longer(
-    7:9,
-    names_to = "Visit.Method",
-    values_to = "weekly_vol"
-  )
-weekly_vol_last_year <- scheduling_data %>%
-  filter(Appt.WeekNum %in% unique(past_4_wks$Appt.WeekNum)) %>%
-  filter(Appt.Status == "Arrived") %>%
-  arrange(Appt.Year, Appt.WeekNum) %>%
-  group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.Week, Appt.WeekNum, Visit.Method) %>%
-  summarise(weekly_vol = n()) %>%
-    pivot_wider(
-    names_from = Visit.Method, 
-    values_from = weekly_vol,
-    values_fill=list(weekly_vol=0)
-  ) %>%
-  mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-  pivot_longer(
-    7:9,
-    names_to = "Visit.Method",
-    values_to = "weekly_vol"
-  )
-```
-
-
 ```{r Monthly Volume Data, echo = FALSE, warning = FALSE, message = FALSE}
 monthly_vol <- scheduling_data %>%
-  filter(Appt.Status == "Arrived") %>%
-  # filter(Appt.Year >= as.numeric(todays_year)-1) %>%
   mutate(Appt.MonNum = as.numeric(strftime(Appt.DateYear, format = "%m")),
-         Appt.Month = strftime(Appt.DateYear, format = "%B")) %>%
+         Appt.Month = strftime(Appt.DateYear, format = "%B"),
+         Appt.Year = as.character(Appt.Year)) %>%
   group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.MonNum, Appt.Month, Visit.Method) %>%
-  summarise(monthly_vol = n()) 
+  summarise(monthly_vol = sum(monthly_vol))
+
 # Merge with Rad Onc and Radiology Data
 monthly_vol <- bind_rows(monthly_vol, rad_radOnc_data)
 monthly_vol <- monthly_vol %>%
@@ -588,47 +434,26 @@ monthly_vol <- monthly_vol %>%
     values_to = "monthly_vol"
   )
 monthly_vol <- monthly_vol %>%
-  filter(Appt.Year >= as.numeric(todays_year)-1) 
-# require(openxlsx)
-# write.xlsx(monthly_vol, "/SharedDrive/deans/Presidents/SixSigma/Individual Folders/Current Employees/Engineers/So Youn Kweon/server-upload/monthly_volume_Jan21Dec22.xlsx")
-# Last 12 months of monthly data 
-# monthly_vol_12mo <- scheduling_data %>%
-#   filter(Appt.Status == "Arrived") %>%
-#   filter(Appt.DTTM >= max(Appt.DTTM) - months(13)) %>%
-#   mutate(Appt.MonNum = as.numeric(strftime(Appt.DateYear, format = "%m")),
-#          Appt.Month = strftime(Appt.DateYear, format = "%B")) %>%
-#   group_by(Campus, Campus.Specialty, Department, Appt.Year, Appt.MonNum, Appt.Month, Visit.Method) %>%
-#   summarise(monthly_vol = n()) 
-# # Merge with Rad Onc and Radiology Data
-# rad_radOnc_data_12mo <- merge(unique(monthly_vol_12mo[,c("Appt.Year","Appt.MonNum")]), rad_radOnc_data)
-# monthly_vol_12mo <- bind_rows(monthly_vol_12mo, rad_radOnc_data_12mo)
-# monthly_vol_12mo <- monthly_vol_12mo %>%
-#   dplyr::select(-Month) %>%
-#   pivot_wider(
-#     names_from = Visit.Method, 
-#     values_from = monthly_vol,
-#     values_fill=list(monthly_vol=0)
-#   ) %>%
-#   mutate(Total = sum(`IN PERSON`, TELEHEALTH)) %>%
-#   pivot_longer(
-#     7:9,
-#     names_to = "Visit.Method",
-#     values_to = "monthly_vol"
-#   )
-# monthly_vol_12mo <- monthly_vol_12mo %>%
-#   filter(Appt.Year >= as.numeric(todays_year)-1) 
+  filter(Appt.Year >= 2019) %>%
+  rename(Site = Campus,
+         Specialty = Campus.Specialty,
+         AppointmentYear = Appt.Year,
+         AppointmentMonth = Appt.MonNum,
+         VisitMethod = Visit.Method, 
+         Volume = monthly_vol)
 ```
 
 
 ```{r 2022 Past Year Volume Reference, echo = FALSE, warning = FALSE, message = FALSE}
 # In Person + Telehealth (Includes Radiology and Rad Onc) - Based on Exeutive Dashboard Tableau Workbook
-avg_2022_ref <- monthly_vol %>%
-  filter(Appt.Year == 2022) %>%
-  filter(Visit.Method == "Total") %>%
-  group_by(Campus, Appt.Year, Appt.Month) %>%
-  summarise(total = sum(monthly_vol)) %>%
-  group_by(Campus) %>%
-  summarise(avg = round(mean(total),0))
+# avg_2022_ref <- monthly_vol %>%
+#   filter(Appt.Year == 2022) %>%
+#   filter(Visit.Method == "Total") %>%
+#   group_by(Campus, Appt.Year, Appt.Month) %>%
+#   summarise(total = sum(monthly_vol)) %>%
+#   group_by(Campus) %>%
+#   summarise(avg = round(mean(total),0))
+
 ```
 
 
@@ -640,19 +465,19 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 # Ambulatory Volume Summary
 *Report run date: `r report_run_date`*<br/>
 *Report produced for week of `r todays_date`*<br/>
-*A Full week is comprised of Sunday to Saturday.*<br/>
-*Includes all completed/arrived visits.*<br/>
-*Rad Onc and Radiology data is included only in monthly volumes.*<br/>
+*Includes all completed/arrived visits from 2019 (including Radiology and Rad Onc volumes)*<br/>
 __________________________________________________________________________________________________________________________________________________________
 
 ## Monthly Volume by Site {.tabset .tabset-fade .tabset-pills}
 ```{r Monthly Volume Data Download, echo = FALSE, warning = FALSE, message = FALSE}
+
 htmltools::browsable(
   tagList(
     tags$button(
       tagList(fontawesome::fa("download"), "Download Monthly Volume by Site"),
-      onclick = "Reactable.downloadDataCSV('unassigned-download-table', 'Unassigned Referrals Data')"
+      onclick = "Reactable.downloadDataCSV('monthly-vol-download-table', 'Monthly Volume Data')"
     ),
+
     reactable(
       monthly_vol,
       style = list(fontFamily = 'Calibri',
@@ -667,20 +492,25 @@ htmltools::browsable(
     wrap = TRUE,
     searchable = TRUE,
     
-    groupBy = c("Campus"),
-    elementId = "unassigned-download-table"
+    groupBy = c("Site"),
+    elementId = "monthly-vol-download-table"
+
     )
   )
 )
+
 ```
 
 
 ```{r Monthly Volume Data Download Test, echo = FALSE, warning = FALSE, message = FALSE}
-datatable(monthly_vol, extensions = "Buttons", 
-            options = list(paging = TRUE,
-                           scrollX=TRUE, 
-                           searching = TRUE,
-                           ordering = TRUE,
-                           dom = 'Bfrtip',
-                           buttons = c('copy', 'csv', 'excel', 'pdf')))
+
+# datatable(monthly_vol, extensions = "Buttons", 
+#             options = list(paging = TRUE,
+#                            scrollX=TRUE, 
+#                            searching = TRUE,
+#                            ordering = TRUE,
+#                            dom = 'Bfrtip',
+#                            buttons = c('copy', 'csv', 'excel', 'pdf')))
+
 ```
+
