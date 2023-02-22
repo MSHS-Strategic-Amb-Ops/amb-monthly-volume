@@ -1,14 +1,6 @@
 ---
 output:
-  html_document:
-    toc: yes
-    toc_depth: 6
-    toc_float:
-      collapsed: yes
-    fig_width: 7
-    fig_height: 6
-resource_files:
-- Logo/Mount_Sinai_Logo_H.png
+  html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -480,7 +472,7 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 ```
 
 
-# Ambulatory Volume Summary
+# Ambulatory Volume by Month
 *Report run date: `r report_run_date`*<br/>
 *Includes all completed/arrived visits from `r report_start_date` to `r report_end_date`*<br/>
 *Includes Radiology (RIS) and Radiation Oncology (MOSAIC) volumes*<br/>
