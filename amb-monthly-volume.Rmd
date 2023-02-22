@@ -321,6 +321,19 @@ scheduling_data <- access_raw_tbl %>%
 
 
 
+# test <- access_raw_tbl %>%
+#   filter(DEPARTMENT_NAME == "10 UNION SQ E CARDIO") %>%
+#   filter(DERIVED_STATUS_DESC == "Arrived") %>%
+#   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>%
+#   mutate(Appt.Year = year(CONTACT_DATE),
+#          Appt.Month = month(CONTACT_DATE)) %>%
+#   filter(Appt.Year == 2022) %>%
+#   filter(Appt.Month == 12) %>%
+#   collect() %>%
+#   dplyr::select(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, PAT_ENC_CSN_ID, Appt.DateYear, Appt.Year, Appt.Month, VISIT_METHOD) 
+  
+
+
 # Scheduling Data (Epic)
 scheduling_data <- scheduling_data %>%
   mutate(Appt.WeekNum = lubridate::epiweek(Appt.DateYear),
@@ -409,6 +422,9 @@ current_month <- format((lubridate::floor_date(max(scheduling_data$Appt.DateYear
 visits_end_date <- max(scheduling_data$Appt.DateYear)
 
 report_run_date <- Sys.Date()
+
+report_start_date <- as.Date("2019-01-01","%Y-%m-%d")
+report_end_date <- format(max(scheduling_data$Appt.DateYear),"%Y-%m-%d")
 ```
 
 
@@ -466,7 +482,8 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 
 # Ambulatory Volume Summary
 *Report run date: `r report_run_date`*<br/>
-*Includes all completed/arrived visits from 2019 (including Radiology and Rad Onc volumes)*<br/>
+*Includes all completed/arrived visits from `r report_start_date` to `r report_end_date`*<br/>
+*Includes Radiology (RIS) and Radiation Oncology (MOSAIC) volumes*<br/>
 __________________________________________________________________________________________________________________________________________________________
 
 ## Monthly Volume by Site {.tabset .tabset-fade .tabset-pills}
