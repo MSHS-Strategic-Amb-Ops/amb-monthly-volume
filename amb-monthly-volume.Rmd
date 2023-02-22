@@ -449,8 +449,10 @@ monthly_vol <- monthly_vol %>%
          Specialty = Campus.Specialty,
          AppointmentYear = Appt.Year,
          AppointmentMonth = Appt.MonNum,
+         AppointmentMonthName = Appt.Month,
          VisitMethod = Visit.Method, 
          Volume = monthly_vol)
+
 ```
 
 
@@ -475,7 +477,7 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 # Ambulatory Volume by Month
 *Report run date: `r report_run_date`*<br/>
 *Includes all completed/arrived visits from `r report_start_date` to `r report_end_date`*<br/>
-*Includes Radiology (RIS) and Radiation Oncology (MOSAIC) volumes*<br/>
+*Includes Radiology (RIS) and Radiation Oncology (MOSAIC) volumes up to `r radiology_date`*<br/>
 __________________________________________________________________________________________________________________________________________________________
 
 ## Monthly Volume by Site {.tabset .tabset-fade .tabset-pills}
