@@ -288,6 +288,386 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 ```
 
 
+<!-- ```{r Unique Patients, echo = FALSE, warning = FALSE, message = FALSE} -->
+
+<!-- # Connection to Oracle DB ------------------------------------------------------ -->
+<!-- conn1 <- dbPool(drv = odbc(), dsn = "OAO Cloud DB SoYoun", timeout = 30) -->
+
+<!-- # Import Slot Availability Data ------------------------------------------------ -->
+<!-- # slot_raw_tbl <- tbl(conn1, "Y_DM_BOOKED_FILLED_RATE") -->
+<!-- access_raw_tbl <- tbl(conn1, "MV_DM_PATIENT_ACCESS") -->
+
+<!-- unique_pts_data_2022 <- access_raw_tbl %>% -->
+<!--   filter(SITE %in% c("MSBI","MSDMG","MSH- AMBULATORY CARE","MSH-MSDFP","MSM","MSUS","MSW","ONCOLOGY","NETWORK")) %>% -->
+<!--   # filter(SITE == "NETWORK") %>% -->
+<!--   filter(DERIVED_STATUS_DESC == "Arrived") %>% -->
+<!--   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>% -->
+<!--   mutate(Appt.Year = year(CONTACT_DATE), -->
+<!--          Appt.Month = month(CONTACT_DATE)) %>% -->
+<!--   filter(Appt.Year == 2022) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   collect() -->
+
+<!-- unique_pts_data_2022$Appt.Year <- 2022 -->
+
+<!-- unique_pts_data_2021 <- access_raw_tbl %>% -->
+<!--   filter(SITE %in% c("MSBI","MSDMG","MSH- AMBULATORY CARE","MSH-MSDFP","MSM","MSUS","MSW","ONCOLOGY","NETWORK")) %>% -->
+<!--   # filter(SITE == "NETWORK") %>% -->
+<!--   filter(DERIVED_STATUS_DESC == "Arrived") %>% -->
+<!--   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>% -->
+<!--   mutate(Appt.Year = year(CONTACT_DATE), -->
+<!--          Appt.Month = month(CONTACT_DATE)) %>% -->
+<!--   filter(Appt.Year == 2021) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   collect() -->
+
+<!-- unique_pts_data_2021$Appt.Year <- 2021 -->
+
+<!-- unique_pts_data_2020 <- access_raw_tbl %>% -->
+<!--   filter(SITE %in% c("MSBI","MSDMG","MSH- AMBULATORY CARE","MSH-MSDFP","MSM","MSUS","MSW","ONCOLOGY","NETWORK")) %>% -->
+<!--   # filter(SITE == "NETWORK") %>% -->
+<!--   filter(DERIVED_STATUS_DESC == "Arrived") %>% -->
+<!--   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>% -->
+<!--   mutate(Appt.Year = year(CONTACT_DATE), -->
+<!--          Appt.Month = month(CONTACT_DATE)) %>% -->
+<!--   filter(Appt.Year == 2020) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   collect() -->
+
+<!-- unique_pts_data_2020$Appt.Year <- 2020 -->
+
+<!-- unique_pts_data_2019 <- access_raw_tbl %>% -->
+<!--   filter(SITE %in% c("MSBI","MSDMG","MSH- AMBULATORY CARE","MSH-MSDFP","MSM","MSUS","MSW","ONCOLOGY","NETWORK")) %>% -->
+<!--   # filter(SITE == "NETWORK") %>% -->
+<!--   filter(DERIVED_STATUS_DESC == "Arrived") %>% -->
+<!--   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>% -->
+<!--   mutate(Appt.Year = year(CONTACT_DATE), -->
+<!--          Appt.Month = month(CONTACT_DATE)) %>% -->
+<!--   filter(Appt.Year == 2019) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   collect() -->
+
+<!-- unique_pts_data_2019$Appt.Year <- 2019 -->
+
+
+<!-- check <- bind_rows(unique_pts_data_2022, unique_pts_data_2021) -->
+<!-- check <- check %>% -->
+<!--   group_by(Appt.Year, PAT_ID) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   group_by(Appt.Year) %>% -->
+<!--   summarise(total = n()) -->
+<!-- check <- check %>% -->
+<!--   pivot_wider(names_from = Appt.Year, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) -->
+
+
+
+<!-- unique_pts_data_2020_2021 <- access_raw_tbl %>% -->
+<!--   filter(SITE %in% c("MSBI","MSDMG","MSH- AMBULATORY CARE","MSH-MSDFP","MSM","MSUS","MSW","ONCOLOGY","NETWORK")) %>% -->
+<!--   filter(DERIVED_STATUS_DESC == "Arrived") %>% -->
+<!--   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>% -->
+<!--   mutate(Appt.Year = year(CONTACT_DATE), -->
+<!--          Appt.Month = month(CONTACT_DATE)) %>% -->
+<!--   filter(Appt.Year < 2022) %>% -->
+<!--   filter(Appt.Year >= 2020) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   collect() -->
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+
+<!-- # 2022 ========================================================================= -->
+<!-- # New to MSHS ------------------------------------------------------------------ -->
+<!-- new_year_mshs <- unique_pts_data_2022 %>% -->
+<!--   group_by(PAT_ID) %>% -->
+<!--   summarise(total = n()) -->
+
+<!-- new_all_mshs <- unique_pts_data_2020_2021 %>% -->
+<!--   group_by(PAT_ID) %>% -->
+<!--   summarise(prior_visit = n()) %>% -->
+<!--   mutate(prior_visit = "Yes") -->
+
+<!-- new_year_mshs$prior_visit <- new_all_mshs$prior_visit[match(new_year_mshs$PAT_ID, new_all_mshs$PAT_ID)] -->
+
+<!-- new_year_mshs_summary <- new_year_mshs %>% -->
+<!--   mutate(Appt.Year = 2022) %>% -->
+<!--   group_by(Appt.Year, prior_visit) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(prior_visit = ifelse(is.na(prior_visit), "No", "Yes")) %>% -->
+<!--   pivot_wider(names_from = prior_visit, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(total = Yes + No, -->
+<!--          new_perc = round(No/total,2)) -->
+
+<!-- # New to Site ------------------------------------------------------------------ -->
+<!-- new_year_site <- unique_pts_data_2022 %>% -->
+<!--   group_by(SITE, PAT_ID) %>% -->
+<!--   summarise(total = n())  -->
+
+<!-- new_all_site <- unique_pts_data_2020_2021 %>% -->
+<!--   group_by(SITE, PAT_ID) %>% -->
+<!--   summarise(prior_visit = n()) %>% -->
+<!--   mutate(prior_visit = "Yes") -->
+
+<!-- new_year_site <- left_join(new_year_site, new_all_site, by=c("SITE","PAT_ID")) -->
+
+<!-- new_year_site_summary <- new_year_site  %>% -->
+<!--   mutate(Appt.Year = 2022) %>% -->
+<!--   group_by(Appt.Year, SITE, prior_visit) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(prior_visit = ifelse(is.na(prior_visit), "No", "Yes")) %>% -->
+<!--   pivot_wider(names_from = prior_visit, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(total = Yes + No, -->
+<!--          new_perc = round(No/total,2)) -->
+
+
+
+
+<!-- # 2021 ========================================================================= -->
+<!-- # New to MSHS ------------------------------------------------------------------ -->
+<!-- new_year_mshs_2021 <- unique_pts_data_2021 %>% -->
+<!--   group_by(PAT_ID) %>% -->
+<!--   summarise(total = n()) -->
+
+<!-- new_all_mshs_2021 <- bind_rows(unique_pts_data_2020 %>% group_by(PAT_ID) %>% summarise(total = n()),  -->
+<!--                           unique_pts_data_2019 %>% group_by(PAT_ID) %>% summarise(total = n())) -->
+
+<!-- new_all_mshs_2021 <- new_all_mshs_2021 %>% -->
+<!--   group_by(PAT_ID) %>% -->
+<!--   summarise(prior_visit = n()) %>% -->
+<!--   mutate(prior_visit = "Yes") -->
+
+<!-- new_year_mshs_2021$prior_visit <- new_all_mshs_2021$prior_visit[match(new_year_mshs_2021$PAT_ID, new_all_mshs_2021$PAT_ID)] -->
+
+<!-- new_year_mshs_summary_2021 <- new_year_mshs_2021 %>% -->
+<!--   mutate(Appt.Year = 2021) %>% -->
+<!--   group_by(Appt.Year, prior_visit) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(prior_visit = ifelse(is.na(prior_visit), "No", "Yes")) %>% -->
+<!--   pivot_wider(names_from = prior_visit, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(total = Yes + No, -->
+<!--          new_perc = round(No/total,2)) -->
+
+
+<!-- # New to Site ------------------------------------------------------------------ -->
+<!-- new_year_site_2021 <- unique_pts_data_2021 %>% -->
+<!--   group_by(SITE, PAT_ID) %>% -->
+<!--   summarise(total = n())  -->
+
+
+<!-- new_all_site_2021 <- bind_rows(unique_pts_data_2020 %>% group_by(SITE, PAT_ID) %>% summarise(total = n()),  -->
+<!--                           unique_pts_data_2019 %>% group_by(SITE, PAT_ID) %>% summarise(total = n())) -->
+
+<!-- new_all_site_2021 <- new_all_site_2021 %>% -->
+<!--   group_by(SITE, PAT_ID) %>% -->
+<!--   summarise(prior_visit = n()) %>% -->
+<!--   mutate(prior_visit = "Yes") -->
+
+<!-- new_year_site_2021 <- left_join(new_year_site_2021, new_all_site_2021, by=c("SITE","PAT_ID")) -->
+
+<!-- new_year_site_summary_2021 <- new_year_site_2021 %>% -->
+<!--   mutate(Appt.Year = 2021) %>% -->
+<!--   group_by(Appt.Year, SITE, prior_visit) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(prior_visit = ifelse(is.na(prior_visit), "No", "Yes")) %>% -->
+<!--   pivot_wider(names_from = prior_visit, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(total = Yes + No, -->
+<!--          new_perc = round(No/total,2)) -->
+
+
+
+
+<!-- ``` -->
+
+
+<!-- ```{r New Patients, echo = FALSE, warning = FALSE, message = FALSE} -->
+
+<!-- new_pts_2022 <- access_raw_tbl %>% -->
+<!--   filter(SITE %in% c("MSBI","MSDMG","MSH- AMBULATORY CARE","MSH-MSDFP","MSM","MSUS","MSW","ONCOLOGY","NETWORK")) %>% -->
+<!--   filter(DERIVED_STATUS_DESC == "Arrived") %>% -->
+<!--   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>% -->
+<!--   mutate(Appt.Year = year(CONTACT_DATE), -->
+<!--          Appt.Month = month(CONTACT_DATE)) %>% -->
+<!--   filter(Appt.Year <= 2022) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID, PAT_ENC_CSN_ID, Appt.DateYear, Appt.Year, Appt.Month) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   collect() -->
+
+
+
+<!-- # New Patients to MSHS --------------------------------------------------------- -->
+<!-- new_pts_2022_mshs <- new_pts_2022 %>% -->
+<!--   filter(Appt.Year >= 2020) %>% -->
+<!--   group_by(DEPT_SPECIALTY_NAME, PAT_ID, Appt.DateYear) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   arrange(PAT_ID, desc(Appt.DateYear)) %>% -->
+<!--   group_by(PAT_ID) %>% -->
+<!--   mutate(new_to_mshs = seq_len(n())) %>% -->
+<!--   ungroup() %>% -->
+<!--   arrange(PAT_ID, DEPT_SPECIALTY_NAME, desc(Appt.DateYear)) %>% -->
+<!--   group_by(PAT_ID, DEPT_SPECIALTY_NAME) %>% -->
+<!--   mutate(new_to_specialty = seq_len(n())) -->
+
+<!-- # saveRDS(new_pts_2022_mshs, "new_pts_2022_mshs.rds") -->
+
+<!-- # New to MSHS in Last 18 Months ================================================ -->
+<!-- new_pts_2022_to_mshs <- new_pts_2022_mshs %>% -->
+<!--   filter(new_to_mshs <= 2) %>% -->
+<!--   arrange(PAT_ID, new_to_mshs) %>% -->
+<!--   group_by(PAT_ID) %>% -->
+<!--   mutate(last_appt_date = lead(Appt.DateYear))   -->
+
+<!-- new_pts_2022_to_mshs <- new_pts_2022_to_mshs %>% -->
+<!--   mutate(threshold_date = as.Date(Appt.DateYear) %m+% months(-18)) %>% -->
+<!--   mutate(count = case_when(is.na(last_appt_date) & new_to_mshs == 1 ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date >= last_appt_date ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date < last_appt_date ~ "No", -->
+<!--                            TRUE ~ "")) -->
+
+<!-- new_pts_2022_to_mshs_summary <- new_pts_2022_to_mshs %>% -->
+<!--   mutate(Appt.Year = format(Appt.DateYear, "%Y")) %>% -->
+<!--   filter(Appt.Year == 2022) %>% -->
+<!--   group_by(PAT_ID, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   group_by(count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(count = ifelse(count == "","No","Yes")) %>% -->
+<!--   pivot_wider(names_from = count, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(unique = Yes/(Yes + No)) -->
+
+
+<!-- # saveRDS(new_pts_2022_to_mshs, "new_pts_2022_to_mshs.rds") -->
+
+<!-- # New to MSHS Specialty in Last 18 Months ====================================== -->
+<!-- new_pts_2022_to_mshs_specialty <- new_pts_2022_mshs %>% -->
+<!--   filter(new_to_specialty <= 2) %>% -->
+<!--   arrange(PAT_ID, DEPT_SPECIALTY_NAME, new_to_specialty) %>% -->
+<!--   group_by(PAT_ID, DEPT_SPECIALTY_NAME) %>% -->
+<!--   mutate(last_appt_date = lead(Appt.DateYear))   -->
+
+<!-- new_pts_2022_to_mshs_specialty <- new_pts_2022_to_mshs_specialty %>% -->
+<!--   mutate(threshold_date = as.Date(Appt.DateYear) %m+% months(-18)) %>% -->
+<!--   mutate(count = case_when(is.na(last_appt_date) & new_to_specialty == 1 ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date >= last_appt_date ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date < last_appt_date ~ "No", -->
+<!--                            TRUE ~ "")) -->
+
+<!-- new_pts_2022_to_mshs_specialty_summary <- new_pts_2022_to_mshs_specialty %>% -->
+<!--   mutate(Appt.Year = format(Appt.DateYear, "%Y")) %>% -->
+<!--   filter(Appt.Year == 2022) %>% -->
+<!--   group_by(DEPT_SPECIALTY_NAME, PAT_ID, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   group_by(DEPT_SPECIALTY_NAME, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(count = ifelse(count == "","No","Yes")) %>% -->
+<!--   pivot_wider(names_from = count, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(unique = Yes/(Yes + No)) -->
+
+<!-- # saveRDS(new_pts_2022_to_mshs_specialty, "new_pts_2022_to_mshs_specialty.rds") -->
+
+
+
+
+<!-- # New Patients to Site --------------------------------------------------------- -->
+<!-- new_pts_2022_site <- new_pts_2022 %>% -->
+<!--   filter(Appt.Year >= 2019) %>% -->
+<!--   group_by(SITE, DEPT_SPECIALTY_NAME, PAT_ID, Appt.DateYear) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   arrange(SITE, PAT_ID, desc(Appt.DateYear)) %>% -->
+<!--   group_by(SITE, PAT_ID) %>% -->
+<!--   mutate(new_to_site = seq_len(n())) %>% -->
+<!--   ungroup() %>% -->
+<!--   arrange(SITE, PAT_ID, DEPT_SPECIALTY_NAME, desc(Appt.DateYear)) %>% -->
+<!--   group_by(PAT_ID, DEPT_SPECIALTY_NAME) %>% -->
+<!--   mutate(new_to_site_specialty = seq_len(n())) -->
+
+<!-- # saveRDS(new_pts_2022_site, "new_pts_2022_site.rds") -->
+
+<!-- # New to Site in Last 18 Months ================================================ -->
+<!-- new_pts_2022_to_site <- new_pts_2022_site %>% -->
+<!--   filter(new_to_site <= 2) %>% -->
+<!--   arrange(SITE, PAT_ID, new_to_site) %>% -->
+<!--   group_by(SITE, PAT_ID) %>% -->
+<!--   mutate(last_appt_date = lead(Appt.DateYear)) -->
+
+<!-- new_pts_2022_to_site <- new_pts_2022_to_site %>% -->
+<!--   # mutate(threshold_date = as.Date(Appt.DateYear) - months(18)) %>% -->
+<!--   mutate(threshold_date = as.Date(Appt.DateYear) %m+% months(-18)) %>% -->
+<!--   mutate(count = case_when(is.na(last_appt_date) & new_to_site == 1 ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date >= last_appt_date ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date < last_appt_date ~ "No", -->
+<!--                            TRUE ~ "")) -->
+
+
+<!-- new_pts_2022_to_site_summary <- new_pts_2022_to_site %>% -->
+<!--   mutate(Appt.Year = format(Appt.DateYear, "%Y")) %>% -->
+<!--   filter(Appt.Year == 2022) %>% -->
+<!--   group_by(SITE, PAT_ID, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   group_by(SITE, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(count = ifelse(count == "","No","Yes")) %>% -->
+<!--   pivot_wider(names_from = count, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(total = Yes + No, -->
+<!--          unique = Yes/(Yes + No)) -->
+
+<!-- # saveRDS(new_pts_2022_to_site, "new_pts_2022_to_site.rds") -->
+
+
+<!-- # New to Site Specialty in Last 18 Months ====================================== -->
+<!-- new_pts_2022_to_site_specialty <- new_pts_2022_site %>% -->
+<!--   filter(new_to_site_specialty <= 2) %>% -->
+<!--   arrange(SITE, PAT_ID, DEPT_SPECIALTY_NAME, new_to_site_specialty) %>% -->
+<!--   group_by(SITE, PAT_ID, DEPT_SPECIALTY_NAME) %>% -->
+<!--   mutate(last_appt_date = lead(Appt.DateYear))   -->
+
+<!-- new_pts_2022_to_site_specialty <- new_pts_2022_to_site_specialty %>% -->
+<!--   mutate(threshold_date = as.Date(Appt.DateYear) %m+% months(-18)) %>% -->
+<!--   mutate(count = case_when(is.na(last_appt_date) & new_to_site_specialty == 1 ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date >= last_appt_date ~ "Yes", -->
+<!--                            last_appt_date == 1 & threshold_date < last_appt_date ~ "No", -->
+<!--                            TRUE ~ "")) -->
+
+<!-- new_pts_2022_to_site_specialty_summary <- new_pts_2022_to_site_specialty %>% -->
+<!--   mutate(Appt.Year = format(Appt.DateYear, "%Y")) %>% -->
+<!--   filter(Appt.Year == 2022) %>% -->
+<!--   group_by(DEPT_SPECIALTY_NAME, SITE, PAT_ID, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   group_by(DEPT_SPECIALTY_NAME, SITE, count) %>% -->
+<!--   summarise(total = n()) %>% -->
+<!--   mutate(count = ifelse(count == "","No","Yes")) %>% -->
+<!--   pivot_wider(names_from = count, -->
+<!--               values_from = total, -->
+<!--               values_fill = 0) %>% -->
+<!--   mutate(unique = Yes/(Yes + No)) -->
+
+
+<!-- # saveRDS(new_pts_2022_to_site_specialty, "new_pts_2022_to_site_specialty.rds") -->
+
+<!-- ``` -->
+
+
 ```{r Import Clarity Data, echo = FALSE, warning = FALSE, message = FALSE}
 # Connection to Oracle DB ------------------------------------------------------
 conn1 <- dbPool(drv = odbc(), dsn = "OAO Cloud DB SoYoun", timeout = 30)
@@ -312,6 +692,14 @@ scheduling_data <- access_raw_tbl %>%
   collect() 
 
 
+visit_types <-  access_raw_tbl %>%
+  filter(DERIVED_STATUS_DESC == "Arrived") %>%
+  mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>%
+  mutate(Appt.Year = year(CONTACT_DATE),
+         Appt.Month = month(CONTACT_DATE)) %>%
+  group_by( VISIT_GROUP_NUM, PRC_NAME) %>%
+  summarise(total = n()) %>%
+  collect()
 
 # test <- access_raw_tbl %>%
 #   filter(DEPARTMENT_NAME == "10 UNION SQ E CARDIO") %>%
@@ -350,9 +738,9 @@ scheduling_data <- scheduling_data %>%
 ```{r Import Data, echo = FALSE, warning = FALSE, message = FALSE}
 
 # rad_onc_data_raw <- read.csv("Rad_Onc_Data.csv")
-rad_onc_data_raw <- read.csv("/nfs/data/Applications/Ambulatory/Rad_Onc_Data.csv")
-radiology_data_raw <- read.csv("/nfs/data/Applications/Ambulatory/Radiology_Data.csv")
-radiology_ref <- read.csv("/nfs/data/Applications/Ambulatory/Radiology_Site_Mapping.csv")
+rad_onc_data_raw <- as.data.frame(read.csv("/nfs/data/Applications/Ambulatory/Rad_Onc_Data.csv"))
+radiology_data_raw <- as.data.frame(read.csv("/nfs/data/Applications/Ambulatory/Radiology_Data.csv"))
+radiology_ref <- as.data.frame(read.csv("/nfs/data/Applications/Ambulatory/Radiology_Site_Mapping.csv"))
 
 # rad_onc_data_raw <- read.csv("Rad_Onc_Data.csv")
 # radiology_data_raw <- read.csv("Radiology_Data.csv")
@@ -453,6 +841,8 @@ monthly_vol <- monthly_vol %>%
          VisitMethod = Visit.Method, 
          Volume = monthly_vol)
 
+# require(openxlsx)
+# write.xlsx(monthly_vol, "Monthly Vol Sep23.xlsx")
 ```
 
 
@@ -465,6 +855,11 @@ monthly_vol <- monthly_vol %>%
 #   summarise(total = sum(monthly_vol)) %>%
 #   group_by(Campus) %>%
 #   summarise(avg = round(mean(total),0))
+
+```
+
+
+```{r}
 
 ```
 
